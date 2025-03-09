@@ -16,7 +16,7 @@ class QuizApp extends StatelessWidget {
 }
 
 // Welcome Screen
-class QuizScreen extends StatelessWidget {
+class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -62,7 +62,7 @@ class _QuizScreenState extends State<QuizScreen> {
   bool answered = false;
   int score = 0;
   int timer = 10;
-  late Timer questionTimer;
+  Timer? questionTimer;
 
   final List<Map<String, dynamic>> questions = [
     {
@@ -84,12 +84,11 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void startTimer() {
-    timer = 10;
+    setState(() => timer = 10);
+    questionTimer?.cancel(); // Ensure previous timer is cancelled
     questionTimer = Timer.periodic(Duration(seconds: 1), (timer) {
       if (this.timer > 0) {
-        setState(() {
-          this.timer--;
-        });
+        setState(() => this.timer--);
       } else {
         nextQuestion();
       }
@@ -98,7 +97,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
   void checkAnswer(int index) {
     if (!answered) {
-      questionTimer.cancel();
+      questionTimer?.cancel();
       setState(() {
         selectedOptionIndex = index;
         answered = true;
@@ -111,20 +110,20 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void nextQuestion() {
-    questionTimer.cancel();
     if (currentQuestionIndex < questions.length - 1) {
       setState(() {
         currentQuestionIndex++;
         selectedOptionIndex = null;
         answered = false;
-        startTimer();
       });
+      startTimer();
     } else {
       showScore();
     }
   }
 
   void showScore() {
+    questionTimer?.cancel();
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -135,13 +134,7 @@ class _QuizScreenState extends State<QuizScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              setState(() {
-                currentQuestionIndex = 0;
-                selectedOptionIndex = null;
-                answered = false;
-                score = 0;
-                startTimer();
-              });
+              restartQuiz();
             },
             child: Text("Restart"),
           ),
@@ -150,9 +143,19 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 
+  void restartQuiz() {
+    setState(() {
+      currentQuestionIndex = 0;
+      selectedOptionIndex = null;
+      answered = false;
+      score = 0;
+    });
+    startTimer();
+  }
+
   @override
   void dispose() {
-    questionTimer.cancel();
+    questionTimer?.cancel();
     super.dispose();
   }
 
@@ -179,7 +182,7 @@ class _QuizScreenState extends State<QuizScreen> {
             ),
             SizedBox(height: 10),
             LinearProgressIndicator(
-              value: (currentQuestionIndex + 1) / questions.length,
+              value: timer / 10,
               color: Colors.blue,
             ),
             SizedBox(height: 30),
