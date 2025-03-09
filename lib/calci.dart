@@ -1,6 +1,22 @@
 import 'package:flutter/material.dart';
-class CalculatorScreen extends StatefulWidget {
 
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Calculator',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: CalculatorScreen(),
+    );
+  }
+}
+
+class CalculatorScreen extends StatefulWidget {
   @override
   State<CalculatorScreen> createState() => _CalculatorScreenState();
 }
