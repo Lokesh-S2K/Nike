@@ -16,7 +16,7 @@ class QuizApp extends StatelessWidget {
 }
 
 // Welcome Screen
-class WelcomeScreen extends StatelessWidget {
+class QuizScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
