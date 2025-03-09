@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 class AuthScreen extends StatefulWidget {
   @override
   _AuthScreenState createState() => _AuthScreenState();
@@ -8,7 +9,28 @@ class _AuthScreenState extends State<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
   bool isLogin = true;
   bool _obscureText = true;
-  
+
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  void _mockLogin() {
+    if (_formKey.currentState!.validate()) {
+      String email = emailController.text;
+      String password = passwordController.text;
+
+      if (email == "test@example.com" && password == "123456") {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => HomeScreen()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Invalid email or password")),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,6 +51,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                     SizedBox(height: 20),
                     TextFormField(
+                      controller: emailController,
                       decoration: InputDecoration(hintText: "Email"),
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
@@ -40,6 +63,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                     SizedBox(height: 10),
                     TextFormField(
+                      controller: passwordController,
                       decoration: InputDecoration(
                         hintText: "Password",
                         suffixIcon: IconButton(
@@ -61,11 +85,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                     SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          // Perform login or signup action
-                        }
-                      },
+                      onPressed: _mockLogin,
                       child: Text(isLogin ? "Login" : "Signup"),
                     ),
                     TextButton(
@@ -89,4 +109,15 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 }
 
-// Next: To-Do App with CRUD Operations
+// Mock Home Screen
+class HomeScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Home")),
+      body: Center(
+        child: Text("Welcome! You are logged in.", style: TextStyle(fontSize: 24)),
+      ),
+    );
+  }
+}
