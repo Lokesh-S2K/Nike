@@ -1,93 +1,146 @@
-// 4️⃣ Quiz App with Timer
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 
+void main() {
+  runApp(QuizApp());
+}
+
+class QuizApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: WelcomeScreen(),
+    );
+  }
+}
+
+// Welcome Screen
+class WelcomeScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.blue[400],
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              "Quiz App",
+              style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => QuizScreen()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+              ),
+              child: Text("Start Quiz", style: TextStyle(color: Colors.blue, fontSize: 18)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Quiz Screen with Timer and Score Tracking
 class QuizScreen extends StatefulWidget {
   @override
   _QuizScreenState createState() => _QuizScreenState();
 }
 
 class _QuizScreenState extends State<QuizScreen> {
-  List<Map<String, dynamic>> _questions = [
+  int currentQuestionIndex = 0;
+  int? selectedOptionIndex;
+  bool answered = false;
+  int score = 0;
+  int timer = 10;
+  late Timer questionTimer;
+
+  final List<Map<String, dynamic>> questions = [
     {
       "question": "What is the capital of France?",
-      "options": ["Berlin", "Madrid", "Paris", "Lisbonhttp: ^0.13.6"],
-      "answer": "Paris"
-    },
-    {
-      "question": "Which planet is known as the Red Planet?",
-      "options": ["Earth", "Mars", "Jupiter", "Saturn'dependencies"],
-      "answer": "Mars"
+      "options": ["Berlin", "Paris", "Madrid", "Rome"],
+      "answerIndex": 1,
     },
     {
       "question": "What is 2 + 2?",
-      "options": ["3", "4", "5", "6 image_picker ^1.0.7"],
-      "answer": "4"
-    }
+      "options": ["3", "4", "5", "6"],
+      "answerIndex": 1,
+    },
   ];
 
-  int _currentQuestionIndex = 0;
-  int _score = 0;
-  int _timer = 10;
-  late Timer _questionTimer;
-  bool _answered = false;
+  @override
+  void initState() {
+    super.initState();
+    startTimer();
+  }
 
-  void _startTimer() {
-    _timer = 10;
-    _questionTimer = Timer.periodic(Duration(seconds: 1), (timer) {
-      if (_timer > 0) {
+  void startTimer() {
+    timer = 10;
+    questionTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (this.timer > 0) {
         setState(() {
-          _timer--;
+          this.timer--;
         });
       } else {
-        _nextQuestion();
+        nextQuestion();
       }
     });
   }
 
-  void _nextQuestion() {
-    _questionTimer.cancel();
-    setState(() {
-      if (_currentQuestionIndex < _questions.length - 1) {
-        _currentQuestionIndex++;
-        _answered = false;
-        _startTimer();
-      } else {
-        _showScore();
-      }
-    });
-  }
-
-  void _checkAnswer(String selectedOption) {
-    if (!_answered) {
-      _questionTimer.cancel();
+  void checkAnswer(int index) {
+    if (!answered) {
+      questionTimer.cancel();
       setState(() {
-        _answered = true;
-        if (selectedOption == _questions[_currentQuestionIndex]['answer']) {
-          _score++;
+        selectedOptionIndex = index;
+        answered = true;
+        if (index == questions[currentQuestionIndex]["answerIndex"]) {
+          score++;
         }
-        Future.delayed(Duration(seconds: 2), _nextQuestion);
+        Future.delayed(Duration(seconds: 2), nextQuestion);
       });
     }
   }
 
-  void _showScore() {
+  void nextQuestion() {
+    questionTimer.cancel();
+    if (currentQuestionIndex < questions.length - 1) {
+      setState(() {
+        currentQuestionIndex++;
+        selectedOptionIndex = null;
+        answered = false;
+        startTimer();
+      });
+    } else {
+      showScore();
+    }
+  }
+
+  void showScore() {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: Text("Quiz Completed"),
-        content: Text("Your score: $_score/${_questions.length}"),
+        content: Text("Your score: $score/${questions.length}"),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
               setState(() {
-                _currentQuestionIndex = 0;
-                _score = 0;
-                _answered = false;
-                _startTimer();
+                currentQuestionIndex = 0;
+                selectedOptionIndex = null;
+                answered = false;
+                score = 0;
+                startTimer();
               });
             },
             child: Text("Restart"),
@@ -98,50 +151,90 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    _startTimer();
-  }
-
-  @override
   void dispose() {
-    _questionTimer.cancel();
+    questionTimer.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    var currentQuestion = questions[currentQuestionIndex];
+
     return Scaffold(
-      appBar: AppBar(title: Text("Quiz App")),
+      backgroundColor: Colors.white,
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(20),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            SizedBox(height: 50),
             Text(
-              "Time Left: $_timer s",
+              "Time Left: $timer s",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red),
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 10),
             Text(
-              _questions[_currentQuestionIndex]['question'],
+              "Question ${currentQuestionIndex + 1}/${questions.length}",
+              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+            ),
+            SizedBox(height: 10),
+            LinearProgressIndicator(
+              value: (currentQuestionIndex + 1) / questions.length,
+              color: Colors.blue,
+            ),
+            SizedBox(height: 30),
+            Text(
+              currentQuestion["question"],
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
             ),
             SizedBox(height: 20),
-            ..._questions[_currentQuestionIndex]['options'].map((option) {
-              return ElevatedButton(
-                onPressed: () => _checkAnswer(option),
-                child: Text(option, style: TextStyle(fontSize: 20)),
-              );
-            }).toList(),
+            Column(
+              children: List.generate(currentQuestion["options"].length, (index) {
+                Color? optionColor;
+                if (answered) {
+                  if (index == currentQuestion["answerIndex"]) {
+                    optionColor = Colors.green[300]; // Correct answer
+                  } else if (index == selectedOptionIndex) {
+                    optionColor = Colors.red[300]; // Wrong answer
+                  } else {
+                    optionColor = Colors.grey[200];
+                  }
+                } else {
+                  optionColor = Colors.grey[200];
+                }
+
+                return GestureDetector(
+                  onTap: () => checkAnswer(index),
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(15),
+                    margin: EdgeInsets.symmetric(vertical: 5),
+                    decoration: BoxDecoration(
+                      color: optionColor,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      currentQuestion["options"][index],
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  ),
+                );
+              }),
+            ),
+            SizedBox(height: 40),
+            Center(
+              child: ElevatedButton(
+                onPressed: answered ? nextQuestion : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: answered ? Colors.blue : Colors.grey,
+                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                ),
+                child: Text("Next", style: TextStyle(color: Colors.white, fontSize: 18)),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 }
-
-// Next: Image Gallery App
-
