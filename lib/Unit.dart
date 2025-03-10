@@ -28,27 +28,18 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
   double _result = 0.0;
 
   String _selectedCategory = 'Length';
-  String _fromUnit = 'Meters';
-  String _toUnit = 'Kilometers';
+  String _fromUnit = 'Kilometers';
+  String _toUnit = 'Meters';
 
   final Map<String, Map<String, double>> _conversionRates = {
     'Length': {
-      'Meters': 1,
-      'Kilometers': 0.001,
-      'Centimeters': 100,
-      'Feet': 3.28084,
-      'Inches': 39.3701,
-    },
-    'Weight': {
-      'Kilograms': 1,
-      'Grams': 1000,
-      'Pounds': 2.20462,
-      'Ounces': 35.274,
+      'Kilometers': 1,
+      'Meters': 1000,
     },
     'Temperature': {
       'Celsius': 1,
-      'Fahrenheit': 33.8,
-      'Kelvin': 274.15,
+      'Fahrenheit': 1, // Special handling needed
+      'Kelvin': 1,     // Special handling needed
     },
   };
 
@@ -89,18 +80,13 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Select Category",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            // Category Dropdown
+            Text("Select Category", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             DropdownButton<String>(
               value: _selectedCategory,
               isExpanded: true,
               items: _conversionRates.keys.map((category) {
-                return DropdownMenuItem(
-                  value: category,
-                  child: Text(category),
-                );
+                return DropdownMenuItem(value: category, child: Text(category));
               }).toList(),
               onChanged: (newCategory) {
                 setState(() {
@@ -113,33 +99,21 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
             SizedBox(height: 20),
 
             // Input Field
-            Text(
-              "Enter Value",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            Text("Enter Value", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             TextField(
               controller: _inputController,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                hintText: "Enter a number",
-                border: OutlineInputBorder(),
-              ),
+              decoration: InputDecoration(hintText: "Enter a number", border: OutlineInputBorder()),
             ),
             SizedBox(height: 20),
 
             // From Unit
-            Text(
-              "From Unit",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            Text("From Unit", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             DropdownButton<String>(
               value: _fromUnit,
               isExpanded: true,
               items: _conversionRates[_selectedCategory]!.keys.map((unit) {
-                return DropdownMenuItem(
-                  value: unit,
-                  child: Text(unit),
-                );
+                return DropdownMenuItem(value: unit, child: Text(unit));
               }).toList(),
               onChanged: (newUnit) {
                 setState(() {
@@ -150,18 +124,12 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
             SizedBox(height: 20),
 
             // To Unit
-            Text(
-              "To Unit",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            Text("To Unit", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             DropdownButton<String>(
               value: _toUnit,
               isExpanded: true,
               items: _conversionRates[_selectedCategory]!.keys.map((unit) {
-                return DropdownMenuItem(
-                  value: unit,
-                  child: Text(unit),
-                );
+                return DropdownMenuItem(value: unit, child: Text(unit));
               }).toList(),
               onChanged: (newUnit) {
                 setState(() {
@@ -175,9 +143,7 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
             Center(
               child: ElevatedButton(
                 onPressed: _convert,
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                ),
+                style: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15)),
                 child: Text("Convert", style: TextStyle(fontSize: 18)),
               ),
             ),
