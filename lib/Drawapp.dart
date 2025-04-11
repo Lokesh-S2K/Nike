@@ -1,185 +1,101 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
-
-// environment:
-//   sdk: ">2.12.0 <3.7.0"
-//   # > 2.12.0 < 3.7.0
-
-// # Dependencies specify other packages that your package needs in order to work.
-// # To automatically upgrade your package dependencies to the latest versions
-// # consider running ⁠ flutter pub upgrade --major-versions ⁠. Alternatively,
-// # dependencies can be manually updated by changing the version numbers below to
-// # the latest version available on pub.dev. To see which dependencies have newer
-// # versions available, run ⁠ flutter pub outdated ⁠.
-// dependencies:
-//   flutter:
-//     sdk: flutter
-//   screenshot: ^2.1.0
-//   path_provider: ^2.0.15
-
-//   # The following adds the Cupertino Icons font to your application.
-//   # Use with the CupertinoIcons class for iOS style icons.
-//   cupertino_icons: ^1.0.8
-//   provider: ^6.1.2
-
-// dev_dependencies:
-//   flutter_test:
-//     sdk: flutter
-//   nike:
-//     git: "https://github.com/SKaushikAK/Nike.git"
-
 
 void main() {
-  runApp(CatchGame());
+  runApp(MyApp());
 }
 
+enum ShapeType { point, line, rectangle, circle }
 
-
-class CatchGame extends StatelessWidget {
+class MyApp extends StatelessWidget {
+  final GlobalKey<_DrawingCanvasState> canvasKey =
+      GlobalKey<_DrawingCanvasState>();
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: GameScreen(),
-    );
-  }
-}
-
-class GameScreen extends StatefulWidget {
-
-  @override
-  State<GameScreen> createState() => _GameScreenState();
-}
-
-class _GameScreenState extends State<GameScreen> {
-  // Ball variables
-  double ballX = 0;
-  double ballY = -1;
-  double ballSize = 40;
-  double ballSpeedX = 0.02; // Horizontal speed
-  double ballSpeedY = 0.02; // Vertical speed
-  bool movingDown = true; // Ball moving down
-
-  // Basket variables
-  double basketX = 0;
-  double basketWidth = 100;
-
-  // Game variables
-  int score = 0;
-  int lives = 3;
-  bool gameHasStarted = false;
-  Timer? gameTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    resetGame();
-  }
-
-  // Start the game
-  void startGame() {
-    gameHasStarted = true;
-    gameTimer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
-      setState(() {
-        moveBall();
-        checkCollision();
-      });
-    });
-  }
-
-  // Reset the game
-  void resetGame() {
-    setState(() {
-      ballX = 0;
-      ballY = -1;
-      ballSpeedY = 0.02;
-      score = 0;
-      lives = 3;
-      gameHasStarted = false;
-    });
-  }
-
-  // Move the ball with bouncing logic
-  void moveBall() {
-    // Move horizontally
-    ballX += ballSpeedX;
-
-    // Bounce off left or right walls
-    if (ballX <= -1 || ballX >= 1) {
-      ballSpeedX *= -1; // Reverse direction
-    }
-
-    // Move vertically
-    if (movingDown) {
-      ballY += ballSpeedY;
-    } else {
-      ballY -= ballSpeedY;
-    }
-
-    // Ball hits bottom - bounce back
-    if (ballY > 0.95) {
-      if (ballX >= basketX - basketWidth / 200 &&
-          ballX <= basketX + basketWidth / 200) {
-        score += 1; // Ball caught, increase score
-      } else {
-        lives -= 1; // Missed the ball
-        if (lives == 0) {
-          gameOver();
-          return;
-        }
-      }
-      movingDown = false; // Bounce upward after hitting bottom
-    }
-
-    // Ball hits top - change direction
-    if (ballY < -1) {
-      movingDown = true; // Start moving down again
-    }
-  }
-
-  // Check if ball goes beyond limits
-  void checkCollision() {
-    if (lives == 0) {
-      gameOver();
-    }
-  }
-
-  // Game over - show dialog
-  void gameOver() {
-    gameTimer?.cancel();
-    gameHasStarted = false;
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Game Over"),
-          content: Text("Score: $score"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                resetGame();
-                Navigator.pop(context);
-              },
-              child: const Text("Restart"),
-            ),
+      title: 'Drawing App',
+      theme: ThemeData(primarySwatch: Colors.teal),
+      home: Scaffold(
+        appBar: AppBar(title: Text('Drawing App')),
+        body: Column(
+          children: [
+            Expanded(child: DrawingCanvas(key: canvasKey)),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Wrap(
+                spacing: 10,
+                children: [
+                  ElevatedButton(
+                    onPressed: () =>
+                        canvasKey.currentState?.updateShape(ShapeType.point),
+                    child: Text("Point"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () =>
+                        canvasKey.currentState?.updateShape(ShapeType.line),
+                    child: Text("Line"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => canvasKey.currentState
+                        ?.updateShape(ShapeType.rectangle),
+                    child: Text("Rectangle"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () =>
+                        canvasKey.currentState?.updateShape(ShapeType.circle),
+                    child: Text("Circle"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => canvasKey.currentState?.clearCanvas(),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent),
+                    child: Text("Clear"),
+                  ),
+                ],
+              ),
+            )
           ],
-        );
-      },
+        ),
+      ),
     );
   }
+}
 
-  // Move basket horizontally on drag
-  void moveBasket(DragUpdateDetails details) {
+class DrawingCanvas extends StatefulWidget {
+  DrawingCanvas({Key? key}) : super(key: key);
+
+  @override
+  _DrawingCanvasState createState() => _DrawingCanvasState();
+}
+
+class _DrawingCanvasState extends State<DrawingCanvas> {
+  ShapeType _currentShape = ShapeType.point;
+  List<Offset> _points = [];
+  List<DrawnShape> _shapes = [];
+
+  void updateShape(ShapeType shape) {
     setState(() {
-      double dragX = details.delta.dx / MediaQuery.of(context).size.width;
-      basketX += dragX * 2;
+      _currentShape = shape;
+    });
+  }
 
-      // Keep basket within boundaries
-      if (basketX < -1) {
-        basketX = -1;
-      } else if (basketX > 1) {
-        basketX = 1;
+  void clearCanvas() {
+    setState(() {
+      _shapes.clear();
+      _points.clear();
+    });
+  }
+
+  void _handleTapDown(TapDownDetails details) {
+    setState(() {
+      if (_currentShape == ShapeType.point) {
+        _shapes.add(DrawnShape(_currentShape, [details.localPosition]));
+      } else if (_points.length == 0 || _points.length == 1) {
+        _points.add(details.localPosition);
+        if ((_currentShape != ShapeType.point && _points.length == 2)) {
+          _shapes.add(DrawnShape(_currentShape, List.from(_points)));
+          _points.clear();
+        }
       }
     });
   }
@@ -187,80 +103,56 @@ class _GameScreenState extends State<GameScreen> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        if (!gameHasStarted) {
-          startGame(); // Start the game on initial tap
-        }
-      },
-      onHorizontalDragUpdate: moveBasket, // Move basket on drag
-      child: Scaffold(
-        backgroundColor: Colors.blue[200],
-        body: Column(
-          children: [
-            // Game Area
-            Expanded(
-              flex: 4,
-              child: Stack(
-                children: [
-                  // Ball
-                  AnimatedContainer(
-                    alignment: Alignment(ballX, ballY),
-                    duration: const Duration(milliseconds: 0),
-                    child: Container(
-                      width: ballSize,
-                      height: ballSize,
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                  // Basket
-                  Container(
-                    alignment: Alignment(basketX, 1),
-                    child: Container(
-                      width: basketWidth,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: Colors.orange,
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                    ),
-                  ),
-                  // Tap to Start Message
-                  gameHasStarted
-                      ? const SizedBox.shrink()
-                      : const Center(
-                    child: Text(
-                      "TAP TO START",
-                      style: TextStyle(fontSize: 24, color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Bottom UI
-            Expanded(
-              child: Container(
-                color: Colors.brown[300],
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Text(
-                      "Score: $score",
-                      style: const TextStyle(fontSize: 24, color: Colors.white),
-                    ),
-                    Text(
-                      "Lives: $lives",
-                      style: const TextStyle(fontSize: 24, color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+      onTapDown: _handleTapDown,
+      child: CustomPaint(
+        painter: ShapePainter(_shapes),
+        size: Size.infinite,
       ),
     );
   }
+}
+
+class DrawnShape {
+  final ShapeType type;
+  final List<Offset> points;
+
+  DrawnShape(this.type, this.points);
+}
+
+class ShapePainter extends CustomPainter {
+  final List<DrawnShape> shapes;
+
+  ShapePainter(this.shapes);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..strokeWidth = 3.0
+      ..color = Colors.black
+      ..style = PaintingStyle.stroke;
+
+    for (var shape in shapes) {
+      switch (shape.type) {
+        case ShapeType.point:
+          canvas.drawCircle(
+              shape.points[0], 3.0, paint..style = PaintingStyle.fill);
+          break;
+        case ShapeType.line:
+          canvas.drawLine(shape.points[0], shape.points[1], paint);
+          break;
+        case ShapeType.rectangle:
+          final rect = Rect.fromPoints(shape.points[0], shape.points[1]);
+          canvas.drawRect(rect, paint);
+          break;
+        case ShapeType.circle:
+          final center = (shape.points[0] + shape.points[1]) / 2;
+          final radius = (shape.points[0] - shape.points[1]).distance / 2;
+          canvas.drawCircle(center, radius, paint);
+          break;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
